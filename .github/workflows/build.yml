@@ -8,79 +8,96 @@ on:
   workflow_dispatch:
     inputs:
       ipa_url:
-        description: "Direct link IPA"
+        description: "Direct link IPA (decrypted, .ipa)"
         required: true
         type: string
+      sdk_version:
+        description: "iOS SDK version"
+        required: false
+        default: "16.5"
+      target_version:
+        description: "Minimum iOS target"
+        required: false
+        default: "14.0"
       output_ipa:
-        description: "Output IPA filename"
+        description: "Output injected IPA filename"
         required: false
         default: "DLTwitter-injected.ipa"
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: macos-13
 
     env:
       THEOS: ${{ github.workspace }}/theos
 
     steps:
-      # 1. Checkout
-      - name: Checkout repository
+      # 1. Checkout DLTwitter
+      - name: Checkout DLTwitter
         uses: actions/checkout@v4
+        with:
+          path: main
 
-      # 2. Dependencies
-      - name: Install system dependencies
+      # 2. Checkout Theos (same pattern as BHTwitter)
+      - name: Checkout Theos
+        uses: actions/checkout@v4
+        with:
+          repository: theos/theos
+          ref: master
+          path: theos
+          submodules: recursive
+
+      # 3. Install dependencies (brew, same idea as BHTwitter)
+      - name: Install dependencies
         run: |
-          sudo apt update
-          sudo apt install -y \
-            git curl wget unzip zip \
-            build-essential clang \
-            python3 python3-pip python3-venv \
-            libssl-dev liblzma-dev
+          brew update
+          brew install make dpkg ldid python3
+          echo "$(brew --prefix make)/libexec/gnubin" >> "$GITHUB_PATH"
 
-      # 3. Theos
-      - name: Setup Theos + iOS toolchain
+      # 4. Cache iOS SDK
+      - name: Cache iOS SDK
+        id: cache-sdk
+        uses: actions/cache@v4
+        with:
+          path: theos/sdks/iPhoneOS${{ inputs.sdk_version }}.sdk
+          key: ios-sdk-${{ inputs.sdk_version }}
+
+      # 5. Download iOS SDK if not cached
+      - name: Download iOS SDK
+        if: steps.cache-sdk.outputs.cache-hit != 'true'
         run: |
-          git clone --recursive https://github.com/theos/theos.git "$THEOS"
-          echo "THEOS=$THEOS" >> $GITHUB_ENV
+          mkdir -p theos/sdks
+          curl -L -o sdk.tar.xz \
+            https://github.com/theos/sdks/releases/download/master-146e41f/iPhoneOS${{ inputs.sdk_version }}.sdk.tar.xz
+          tar -xJf sdk.tar.xz -C theos/sdks
+          rm sdk.tar.xz
 
-          # Install iOS toolchain for Linux (CORRECT PATH)
-          cd "$THEOS"
-          ./toolchain/linux/iphone/install.sh
-
-          # SDK directory
-          mkdir -p "$THEOS/sdks"
-
-          # Download iOS 16.5 SDK (.tar.xz)
-          curl -L -o ios_sdk.tar.xz \
-            https://github.com/theos/sdks/releases/download/master-146e41f/iPhoneOS16.5.sdk.tar.xz
-
-          # Extract SDK
-          tar -xJf ios_sdk.tar.xz -C "$THEOS/sdks"
-          rm ios_sdk.tar.xz
-
-      # 4. Build tweak
-      - name: Build tweak (.deb)
+      # 6. Build tweak (.deb)
+      - name: Build tweak
+        working-directory: main
+        env:
+          THEOS: ${{ github.workspace }}/theos
         run: |
+          sed -i '' "s/^TARGET.*/TARGET := iphone:clang:${{ inputs.sdk_version }}:${{ inputs.target_version }}/" Makefile || true
           make clean package FINALPACKAGE=1
           ls -lh packages
 
-      # 5. Download IPA (INPUT DARI UI)
+      # 7. Download IPA (from workflow input)
       - name: Download IPA
+        working-directory: main
         run: |
-          echo "Downloading IPA from:"
-          echo "${{ inputs.ipa_url }}"
-          wget -O input.ipa "${{ inputs.ipa_url }}"
+          curl -L "${{ inputs.ipa_url }}" -o input.ipa
           file input.ipa
 
-      # 6. Install pyzule-rw
+      # 8. Install pyzule-rw
       - name: Install pyzule-rw
         run: |
           pip3 install --force-reinstall https://github.com/asdfzxcvbn/pyzule-rw/archive/main.zip
           cyan --help
 
-      # 7. Inject (UNSIGNED)
-      - name: Inject tweak into IPA (unsigned)
+      # 9. Inject tweak into IPA (UNSIGNED)
+      - name: Inject tweak into IPA
+        working-directory: main
         run: |
           DEB_FILE="$(ls packages/*.deb | head -n 1)"
           echo "Using deb: $DEB_FILE"
@@ -90,11 +107,11 @@ jobs:
             -o "${{ inputs.output_ipa }}" \
             -f "$DEB_FILE"
 
-      # 8. Upload artifacts
+      # 10. Upload artifacts
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: DLTwitter-build
           path: |
-            packages/*.deb
-            ${{ inputs.output_ipa }}
+            main/packages/*.deb
+            main/${{ inputs.output_ipa }}
