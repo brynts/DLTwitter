@@ -39,15 +39,25 @@ jobs:
             libssl-dev liblzma-dev
 
       # 3. Theos
-      - name: Setup Theos
+      - name: Setup Theos + iOS toolchain
         run: |
+          # Clone Theos
           git clone --recursive https://github.com/theos/theos.git "$THEOS"
           echo "THEOS=$THEOS" >> $GITHUB_ENV
+
+          # Install Theos iOS toolchain for Linux
+          bash "$THEOS/bin/install-toolchain.sh" iphoneos
+
+          # SDK directory
           mkdir -p "$THEOS/sdks"
 
-          # Download SDK iOS 16.5 (.tar.xz)
+          # Download iOS 16.5 SDK (.tar.xz)
           curl -L -o ios_sdk.tar.xz \
             https://github.com/theos/sdks/releases/download/master-146e41f/iPhoneOS16.5.sdk.tar.xz
+
+          # Extract SDK
+          tar -xJf ios_sdk.tar.xz -C "$THEOS/sdks"
+          rm ios_sdk.tar.xz
 
           # Extract
           tar -xJf ios_sdk.tar.xz -C "$THEOS/sdks"
