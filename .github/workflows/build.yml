@@ -4,64 +4,86 @@ on:
   push:
     branches:
       - main
+
   workflow_dispatch:
+    inputs:
+      ipa_url:
+        description: "Direct link IPA"
+        required: true
+        type: string
+      output_ipa:
+        description: "Output IPA filename"
+        required: false
+        default: "DLTwitter-injected.ipa"
 
-  jobs:
-    build:
-      runs-on: ubuntu-latest
+jobs:
+  build:
+    runs-on: ubuntu-latest
 
-      env:
-        THEOS: ${{ github.workspace }}/theos
-        IPA_URL: https://DIRECT_LINK_IPA.ipa
-        OUTPUT_IPA: DLTwitter-injected.ipa
+    env:
+      THEOS: ${{ github.workspace }}/theos
 
-      steps:
-        - name: Checkout repository
-          uses: actions/checkout@v4
+    steps:
+      # 1. Checkout
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-        - name: Install system dependencies
-          run: |
-            sudo apt update
-            sudo apt install -y \
-              git curl wget unzip zip \
-              build-essential clang \
-              python3 python3-pip python3-venv \
-              libssl-dev liblzma-dev
+      # 2. Dependencies
+      - name: Install system dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y \
+            git curl wget unzip zip \
+            build-essential clang \
+            python3 python3-pip python3-venv \
+            libssl-dev liblzma-dev
 
-        - name: Setup Theos
-          run: |
-            git clone --recursive https://github.com/theos/theos.git "$THEOS"
-            echo "THEOS=$THEOS" >> $GITHUB_ENV
-            mkdir -p "$THEOS/sdks"
-            curl -L -o sdk.zip https://github.com/theos/sdks/releases/download/iOS-16.5/iPhoneOS16.5.sdk.zip
-            unzip -q sdk.zip -d "$THEOS/sdks"
-            rm sdk.zip
+      # 3. Theos
+      - name: Setup Theos
+        run: |
+          git clone --recursive https://github.com/theos/theos.git "$THEOS"
+          echo "THEOS=$THEOS" >> $GITHUB_ENV
+          mkdir -p "$THEOS/sdks"
+          curl -L -o sdk.zip https://github.com/theos/sdks/releases/download/iOS-16.5/iPhoneOS16.5.sdk.zip
+          unzip -q sdk.zip -d "$THEOS/sdks"
+          rm sdk.zip
 
-        - name: Build tweak (.deb)
-          run: |
-            make clean package FINALPACKAGE=1
-            ls -lh packages
+      # 4. Build tweak
+      - name: Build tweak (.deb)
+        run: |
+          make clean package FINALPACKAGE=1
+          ls -lh packages
 
-        - name: Download IPA
-          run: |
-            wget -O input.ipa "$IPA_URL"
-            file input.ipa
+      # 5. Download IPA (INPUT DARI UI)
+      - name: Download IPA
+        run: |
+          echo "Downloading IPA from:"
+          echo "${{ inputs.ipa_url }}"
+          wget -O input.ipa "${{ inputs.ipa_url }}"
+          file input.ipa
 
-        - name: Install pyzule-rw
-          run: |
-            pip3 install --force-reinstall https://github.com/asdfzxcvbn/pyzule-rw/archive/main.zip
-            cyan --help
+      # 6. Install pyzule-rw
+      - name: Install pyzule-rw
+        run: |
+          pip3 install --force-reinstall https://github.com/asdfzxcvbn/pyzule-rw/archive/main.zip
+          cyan --help
 
-        - name: Inject tweak into IPA (unsigned)
-          run: |
-            DEB_FILE="$(ls packages/*.deb | head -n 1)"
-            echo "Using deb: $DEB_FILE"
-            cyan -i input.ipa -o "$OUTPUT_IPA" -f "$DEB_FILE"
+      # 7. Inject (UNSIGNED)
+      - name: Inject tweak into IPA (unsigned)
+        run: |
+          DEB_FILE="$(ls packages/*.deb | head -n 1)"
+          echo "Using deb: $DEB_FILE"
 
-        - name: Upload artifacts
-          uses: actions/upload-artifact@v4
-          with:
-            name: DLTwitter-build
-            path: |
-              packages/*.deb
-              ${{ env.OUTPUT_IPA }}
+          cyan \
+            -i input.ipa \
+            -o "${{ inputs.output_ipa }}" \
+            -f "$DEB_FILE"
+
+      # 8. Upload artifacts
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: DLTwitter-build
+          path: |
+            packages/*.deb
+            ${{ inputs.output_ipa }}
