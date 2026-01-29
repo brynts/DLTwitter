@@ -19,10 +19,9 @@ on:
         description: "Minimum iOS target"
         required: false
         default: "14.0"
-      output_ipa:
-        description: "Output injected IPA filename"
-        required: false
-        default: "DLTwitter-injected.ipa"
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -38,7 +37,7 @@ jobs:
         with:
           path: main
 
-      # 2. Checkout Theos (same pattern as BHTwitter)
+      # 2. Checkout Theos
       - name: Checkout Theos
         uses: actions/checkout@v4
         with:
@@ -47,14 +46,14 @@ jobs:
           path: theos
           submodules: recursive
 
-      # 3. Install dependencies (brew, same idea as BHTwitter)
+      # 3. Install dependencies
       - name: Install dependencies
         run: |
           brew update
-          brew install make dpkg ldid python3
+          brew install make dpkg ldid python3 pipx
           echo "$(brew --prefix make)/libexec/gnubin" >> "$GITHUB_PATH"
 
-      # 4. Cache iOS SDK (folder hasil sparse checkout)
+      # 4. Cache iOS SDK
       - name: Cache iOS SDK
         id: cache-sdk
         uses: actions/cache@v4
@@ -62,19 +61,16 @@ jobs:
           path: theos/sdks/iPhoneOS${{ inputs.sdk_version }}.sdk
           key: ios-sdk-${{ inputs.sdk_version }}
 
-      # 5. Download iOS SDK via sparse checkout (BHTwitter style)
+      # 5. Download iOS SDK (sparse checkout)
       - name: Download iOS SDK
         if: steps.cache-sdk.outputs.cache-hit != 'true'
         run: |
           mkdir -p theos/sdks
           cd theos/sdks
-
           git init
           git remote add origin https://github.com/theos/sdks.git
           git config core.sparseCheckout true
-
           echo "iPhoneOS${{ inputs.sdk_version }}.sdk/*" > .git/info/sparse-checkout
-
           git fetch --depth=1 origin master
           git checkout FETCH_HEAD
 
@@ -88,7 +84,7 @@ jobs:
             make clean package FINALPACKAGE=1
           ls -lh packages
 
-      # 7. Download IPA (from workflow input)
+      # 7. Download IPA
       - name: Download IPA
         working-directory: main
         run: |
@@ -96,30 +92,45 @@ jobs:
           file input.ipa
 
       # 8. Install pyzule-rw
-      - name: Install pyzule-rw (pipx)
+      - name: Install pyzule-rw
         run: |
-          brew install pipx
           pipx ensurepath
           pipx install https://github.com/asdfzxcvbn/pyzule-rw/archive/main.zip
           cyan --help
 
-      # 9. Inject tweak into IPA (UNSIGNED)
-      - name: Inject tweak into IPA
+      # 9. Extract version from IPA Info.plist
+      - name: Read IPA version
+        working-directory: main
+        run: |
+          unzip -q input.ipa -d ipa_tmp
+          APP_PLIST=$(find ipa_tmp/Payload -name Info.plist | head -n 1)
+          VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" "$APP_PLIST")
+          echo "IPA_VERSION=$VERSION" >> $GITHUB_ENV
+          rm -rf ipa_tmp
+          echo "Detected IPA version: $VERSION"
+
+      # 10. Inject tweak & rename IPA
+      - name: Inject tweak into IPA (unsigned)
         working-directory: main
         run: |
           DEB_FILE="$(ls packages/*.deb | head -n 1)"
-          echo "Using deb: $DEB_FILE"
+          OUTPUT_IPA="X_v${IPA_VERSION}_DLTwitter.ipa"
 
           cyan \
             -i input.ipa \
-            -o "${{ inputs.output_ipa }}" \
+            -o "$OUTPUT_IPA" \
             -f "$DEB_FILE"
 
-      # 10. Upload artifacts
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+          echo "FINAL_IPA=$OUTPUT_IPA" >> $GITHUB_ENV
+
+      # 11. Create Draft Release
+      - name: Create Draft Release
+        uses: softprops/action-gh-release@v2
         with:
-          name: DLTwitter-build
-          path: |
+          draft: true
+          prerelease: false
+          name: "DLTwitter v${{ env.IPA_VERSION }}"
+          tag_name: "v${{ env.IPA_VERSION }}"
+          files: |
             main/packages/*.deb
-            main/${{ inputs.output_ipa }}
+            main/${{ env.FINAL_IPA }}
