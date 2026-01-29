@@ -105,15 +105,15 @@ jobs:
           unzip -q input.ipa -d ipa_tmp
           APP_PLIST=$(find ipa_tmp/Payload -name Info.plist | head -n 1)
 
-          VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" "$APP_PLIST" 2>/dev/null || true)
+      VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" "$APP_PLIST" 2>/dev/null || true)
 
-          if [ -z "$VERSION" ]; then
-            VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleVersion" "$APP_PLIST" 2>/dev/null || true)
-          fi
+      if [ -z "$VERSION" ]; then
+        VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleVersion" "$APP_PLIST" 2>/dev/null || true)
+      fi
 
-          if [ -z "$VERSION" ]; then
-            VERSION="unknown"
-          fi
+      if [ -z "$VERSION" ]; then
+        VERSION="unknown"
+      fi
 
           echo "IPA_VERSION=$VERSION" >> $GITHUB_ENV
           echo "Detected IPA version: $VERSION"
