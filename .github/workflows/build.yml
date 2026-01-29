@@ -44,9 +44,14 @@ jobs:
           git clone --recursive https://github.com/theos/theos.git "$THEOS"
           echo "THEOS=$THEOS" >> $GITHUB_ENV
           mkdir -p "$THEOS/sdks"
-          curl -L -o sdk.zip https://github.com/theos/sdks/releases/download/iOS-16.5/iPhoneOS16.5.sdk.zip
-          unzip -q sdk.zip -d "$THEOS/sdks"
-          rm sdk.zip
+
+          # Download SDK iOS 16.5 (.tar.xz)
+          curl -L -o ios_sdk.tar.xz \
+            https://github.com/theos/sdks/releases/download/master-146e41f/iPhoneOS16.5.sdk.tar.xz
+
+          # Extract
+          tar -xJf ios_sdk.tar.xz -C "$THEOS/sdks"
+          rm ios_sdk.tar.xz
 
       # 4. Build tweak
       - name: Build tweak (.deb)
