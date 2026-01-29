@@ -41,12 +41,12 @@ jobs:
       # 3. Theos
       - name: Setup Theos + iOS toolchain
         run: |
-          # Clone Theos
           git clone --recursive https://github.com/theos/theos.git "$THEOS"
           echo "THEOS=$THEOS" >> $GITHUB_ENV
 
-          # Install Theos iOS toolchain for Linux
-          bash "$THEOS/bin/install-toolchain.sh" iphoneos
+          # Install iOS toolchain for Linux (CORRECT PATH)
+          cd "$THEOS"
+          ./toolchain/linux/iphone/install.sh
 
           # SDK directory
           mkdir -p "$THEOS/sdks"
@@ -56,10 +56,6 @@ jobs:
             https://github.com/theos/sdks/releases/download/master-146e41f/iPhoneOS16.5.sdk.tar.xz
 
           # Extract SDK
-          tar -xJf ios_sdk.tar.xz -C "$THEOS/sdks"
-          rm ios_sdk.tar.xz
-
-          # Extract
           tar -xJf ios_sdk.tar.xz -C "$THEOS/sdks"
           rm ios_sdk.tar.xz
 
