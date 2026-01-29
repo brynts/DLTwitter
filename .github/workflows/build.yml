@@ -74,14 +74,15 @@ jobs:
           git fetch --depth=1 origin master
           git checkout FETCH_HEAD
 
-      # 6. Build tweak (.deb)
+      # 6. Build tweak
       - name: Build tweak
         working-directory: main
         env:
           THEOS: ${{ github.workspace }}/theos
+          SDKROOT: ${{ github.workspace }}/theos/sdks/iPhoneOS${{ inputs.sdk_version }}.sdk
         run: |
-          TARGET=iphone:clang:${{ inputs.sdk_version }}:${{ inputs.target_version }} \
-            make clean package FINALPACKAGE=1
+          chmod +x build.sh
+          ./build.sh deb
           ls -lh packages
 
       # 7. Download IPA
