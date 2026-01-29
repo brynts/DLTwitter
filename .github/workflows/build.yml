@@ -84,7 +84,7 @@ jobs:
         env:
           THEOS: ${{ github.workspace }}/theos
         run: |
-          sed -i '' "s/^TARGET.*/TARGET := iphone:clang:${{ inputs.sdk_version }}:${{ inputs.target_version }}/" Makefile || true
+          sed -i '' "s/^TARGET.*/TARGET := iphone:clang:${{ inputs.sdk_version }}14.0/" Makefile
           make clean package FINALPACKAGE=1
           ls -lh packages
 
