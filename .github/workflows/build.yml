@@ -54,7 +54,7 @@ jobs:
           brew install make dpkg ldid python3
           echo "$(brew --prefix make)/libexec/gnubin" >> "$GITHUB_PATH"
 
-      # 4. Cache iOS SDK
+      # 4. Cache iOS SDK (folder hasil sparse checkout)
       - name: Cache iOS SDK
         id: cache-sdk
         uses: actions/cache@v4
@@ -62,15 +62,21 @@ jobs:
           path: theos/sdks/iPhoneOS${{ inputs.sdk_version }}.sdk
           key: ios-sdk-${{ inputs.sdk_version }}
 
-      # 5. Download iOS SDK if not cached
+      # 5. Download iOS SDK via sparse checkout (BHTwitter style)
       - name: Download iOS SDK
         if: steps.cache-sdk.outputs.cache-hit != 'true'
         run: |
           mkdir -p theos/sdks
-          curl -L -o sdk.tar.xz \
-            https://github.com/theos/sdks/releases/download/master-146e41f/iPhoneOS${{ inputs.sdk_version }}.sdk.tar.xz
-          tar -xJf sdk.tar.xz -C theos/sdks
-          rm sdk.tar.xz
+          cd theos/sdks
+
+          git init
+          git remote add origin https://github.com/theos/sdks.git
+          git config core.sparseCheckout true
+
+          echo "iPhoneOS${{ inputs.sdk_version }}.sdk/*" > .git/info/sparse-checkout
+
+          git fetch --depth=1 origin master
+          git checkout FETCH_HEAD
 
       # 6. Build tweak (.deb)
       - name: Build tweak
