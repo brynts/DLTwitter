@@ -1,0 +1,12 @@
+# macOS
+.DS_Store
+
+# Theos / build output
+packages/
+.build/
+*.deb
+*.o
+*.dylib
+
+# Temp
+*.log

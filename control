@@ -1,0 +1,9 @@
+Package: com.opensource.dltwitter
+Name: DLTwitter
+Depends: mobilesubstrate
+Version: 1.0.0
+Architecture: iphoneos-arm
+Description: Enhancer for Twitter/X
+Maintainer: Open Source Reconstruction
+Author: Open Source Reconstruction
+Section: Tweaks

@@ -1,0 +1,1 @@
+{ Filter = { Bundles = ("com.twitter.Twitter", "com.atebits.Tweetie2"); }; }

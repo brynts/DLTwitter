@@ -1,0 +1,59 @@
+"ACTION_CANCEL" = "Cancel";
+"ACTION_CONFIRM" = "Confirm";
+"ACTION_DISMISS" = "Dismiss";
+"ACTION_DOWNLOAD" = "Download";
+"ACTION_GIF" = "GIF";
+"ACTION_MESSAGE_SAVE_SHARE" = "Saved. Share?";
+"ACTION_MORE" = "More";
+"ACTION_SAVE" = "Save";
+"ACTION_SEND" = "Send";
+"ACTION_SHARE" = "Share";
+"ACTION_VIDEO" = "Video";
+"ACTION_VIDEO_TITLE" = "Video";
+
+"DOWNLOAD_SECTITLE" = "Download";
+"DOWNLOAD_HIGHEST_QUALITY" = "Always download in highest quality";
+
+"MEDIA_SECTITLE" = "Media";
+"MEDIA_SHARE_MEDIA" = "Share media";
+"MEDIA_NO_REPEAT_VIDEO" = "No repeat for videos";
+"MEDIA_DISBALE_NEXT_VIDEO" = "Disable scrolling to next video";
+"MEDIA_OLD_VIDEO_INTERFACE" = "Old video interface";
+"MEDIA_TYPE_AUDIO" = "Audio";
+"MEDIA_TYPE_VIDEO" = "Video";
+
+"POPUP_SECTITLE" = "Popup Alert";
+"POPUP_CONFIRM_FOLLOW" = "Confirm follow";
+"POPUP_CONFIRM_FOLLOW_CELL" = "Ask before follow";
+"POPUP_CONFIRM_LIKE_CELL" = "Ask before like";
+"POPUP_CONFIRM_UNLIKE_CELL" = "Ask before unlike";
+"POPUP_CONFIRM_LIKE_UNLIKE" = "Confirm Like/Unlike";
+
+"DM_SECTITLE" = "Direct Messages";
+"DM_DISABLE_TYPING_IND" = "Disable typing indicator";
+"DM_ENABLE_VOICE" = "Enable voice message";
+
+"BROWSER_SECTITLE" = "Browser";
+"BROWSER_IN_SAFARI" = "Open links in safari";
+"BROWSER_USER_THAT_BLOCKED_YOU" = "Browse the accounts that blocked you";
+"BROWSER_OPEN_IN_BUTTON" = "Open in Browser";
+
+"GENERIC" = "Generic";
+"ENABLE_VOICE_TWEET" = "Enable voice tweet";
+"ADS_REMOVE_PROMO_ADS" = "Remove promo Ads";
+"ENABLE_TIP_JAR" = "Enable Tip Jar";
+"COPY_PROFILE_INFO" = "Copy profile info";
+"ALWAYS_SHOW_TRANSLATE_TWEET_BUTTON" = "Always show 'Translate Tweet' button";
+
+"APP_LOCK_ENABLE" = "Enable";
+"APP_LOCK_IMMEDIATELY" = "Immediately";
+
+"DEVELOPER_SECTITLE" = "OpenSource";
+"DEVELOPER_NAME" = "ZeroDeadBeef";
+"DEVELOPER_SUPPORT_ACCOUNT" = "Support account";
+
+"THANKS_SECTITLE" = "Simple POC OpenSource";
+"THANKS_AGAIN" = "ZeroDeadBeef";
+
+"HUD_DOWNLOADING" = "Downloading";
+"HUD_CANCEL" = "Cancel";
