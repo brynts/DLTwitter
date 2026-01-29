@@ -96,9 +96,11 @@ jobs:
           file input.ipa
 
       # 8. Install pyzule-rw
-      - name: Install pyzule-rw
+      - name: Install pyzule-rw (pipx)
         run: |
-          pip3 install --force-reinstall https://github.com/asdfzxcvbn/pyzule-rw/archive/main.zip
+          brew install pipx
+          pipx ensurepath
+          pipx install https://github.com/asdfzxcvbn/pyzule-rw/archive/main.zip
           cyan --help
 
       # 9. Inject tweak into IPA (UNSIGNED)
