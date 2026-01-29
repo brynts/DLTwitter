@@ -98,22 +98,30 @@ jobs:
           pipx install https://github.com/asdfzxcvbn/pyzule-rw/archive/main.zip
           cyan --help
 
-      # 9. Extract version from IPA Info.plist
+      # 9. Read IPA version (correct main app Info.plist)
       - name: Read IPA version
         working-directory: main
         run: |
+          set +e
+
           unzip -q input.ipa -d ipa_tmp
-          APP_PLIST=$(find ipa_tmp/Payload -name Info.plist | head -n 1)
 
-      VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" "$APP_PLIST" 2>/dev/null || true)
+          APP_PLIST=$(find ipa_tmp/Payload -maxdepth 2 -name "*.app" -type d | head -n 1)/Info.plist
 
-      if [ -z "$VERSION" ]; then
-        VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleVersion" "$APP_PLIST" 2>/dev/null || true)
-      fi
+          if [ ! -f "$APP_PLIST" ]; then
+            echo "Main app Info.plist not found"
+            VERSION="unknown"
+          else
+            VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" "$APP_PLIST" 2>/dev/null)
 
-      if [ -z "$VERSION" ]; then
-        VERSION="unknown"
-      fi
+            if [ -z "$VERSION" ]; then
+              VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleVersion" "$APP_PLIST" 2>/dev/null)
+            fi
+
+            if [ -z "$VERSION" ]; then
+              VERSION="unknown"
+            fi
+          fi
 
           echo "IPA_VERSION=$VERSION" >> $GITHUB_ENV
           echo "Detected IPA version: $VERSION"
