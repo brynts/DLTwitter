@@ -26,7 +26,7 @@ on:
 
 jobs:
   build:
-    runs-on: macos-13
+    runs-on: macos-latest
 
     env:
       THEOS: ${{ github.workspace }}/theos
