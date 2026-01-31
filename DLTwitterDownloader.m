@@ -7,20 +7,52 @@
 
 @implementation DLTwitterDownloader
 
+- (NSString *)bestVideoURLFromMedia:(NSDictionary *)media {
+    NSDictionary *videoInfo = media[@"video_info"];
+    NSArray *variants = videoInfo[@"variants"];
+
+    NSString *bestURL = nil;
+    NSInteger bestBitrate = 0;
+
+    for (NSDictionary *variant in variants) {
+        if (![variant[@"content_type"] isEqualToString:@"video/mp4"])
+            continue;
+
+        NSInteger bitrate = [variant[@"bitrate"] integerValue];
+        if (bitrate > bestBitrate) {
+            bestBitrate = bitrate;
+            bestURL = variant[@"url"];
+        }
+    }
+    return bestURL;
+}
+
 + (NSString *)documentsDirectoryPath {
     NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
     return paths.firstObject ?: NSTemporaryDirectory();
 }
 
 - (void)downloadMediaURLString:(id)urlString mediaType:(unsigned long long)type {
+
     NSURL *url = nil;
-    if ([urlString isKindOfClass:[NSURL class]]) {
+
+    // VIDEO (X / Twitter terbaru)
+    if (type == 1 && [urlString isKindOfClass:[NSDictionary class]]) {
+        NSString *bestURL = [self bestVideoURLFromMedia:urlString];
+        if (bestURL) {
+            url = [NSURL URLWithString:bestURL];
+        }
+    }
+    // IMAGE / GIF (tetap pakai logic lama)
+    else if ([urlString isKindOfClass:[NSURL class]]) {
         url = (NSURL *)urlString;
-    } else if ([urlString isKindOfClass:[NSString class]]) {
+    }
+    else if ([urlString isKindOfClass:[NSString class]]) {
         url = [NSURL URLWithString:(NSString *)urlString];
     }
+
     if (!url) {
-        [DLHelper showAlertWithMessage:@"Invalid URL."];
+        [DLHelper showAlertWithMessage:@"Invalid or expired media URL."];
         return;
     }
 
